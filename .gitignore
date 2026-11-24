@@ -1,0 +1,91 @@
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+log.txt
+
+# IDE
+.vscode/
+.idea/
+
+# Local config (may contain tokens)
+.claude/
+.yoke/
+
+# Test artifacts
+tests/utils/*.png
+tests/utils/*.jpg
+tests/utils/*.jpeg
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+claude-proxy-ext-src/.env
+perplexity-openai-api-ref/.env
+
+# Build output
+dist/
+build/
+
+# Sensitive data
+accounts.json
+**/accounts.json
+tokens.json
+**/tokens.json
+perplexity-sessions.json
+model-override.json
+cookies/
+tokens/
+logs/
+*.token
+*.secret
+
+# Secrets files (NEVER commit these)
+.secrets
+**/.secrets
+*.secrets
+claude-proxy-ext-src/.secrets
+AntiGravity-Multiaccount/.secrets
+
+# Session data
+*-sessions.json
+session*.json
+**/session*.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build artifacts
+*.vsix
+antigravity-claude-proxy.zip
+
+# Temporary test files
+test-output.json
+test_message.json
+
+# Trash/backup directories
+Claude-Proxy-Extension-TRASH/
+Claude-Proxy-Extension-BROKEN/
+Claude-Proxy-Extension-TRASH2/
+
+# Test / coverage output
+coverage/
+.nyc_output/
+*.tgz
+target/
+out/
+*.apk
+
+# Status bar extension source: lives in its own repository and is cloned fresh by publish.yml
+claude-proxy-ext-src/
+*.code-workspace

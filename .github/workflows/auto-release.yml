@@ -1,0 +1,54 @@
+name: Auto Release (extension tag)
+
+# When CHANGELOG.md changes on main, tag the status bar extension's current version as
+# ext-vX.Y.Z if that tag does not exist yet. It only ever creates ext-v* tags, so it can
+# never collide with proxy release tags (vX.Y.Z, see release.yml).
+# Note: tags pushed with GITHUB_TOKEN do not start other workflows; run "Publish Extension"
+# manually (or push the ext-v tag yourself) to publish.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'CHANGELOG.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tag-extension:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Read the extension version
+        id: ext
+        run: |
+          git clone --depth 1 https://github.com/muhib-karim/Claude-Proxy-Extension.git /tmp/ext
+          EXT_VERSION=$(node -p "require('/tmp/ext/package.json').version")
+          if ! printf '%s' "$EXT_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::unexpected extension version '$EXT_VERSION'"; exit 1
+          fi
+          echo "TAG=ext-v$EXT_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create the extension tag if missing
+        env:
+          TAG: ${{ steps.ext.outputs.TAG }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists; nothing to do" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git tag -a "$TAG" -m "Status bar extension ${TAG#ext-}"
+          git push origin "refs/tags/$TAG"
+          echo "Created $TAG" | tee -a "$GITHUB_STEP_SUMMARY"

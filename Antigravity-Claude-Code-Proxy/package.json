@@ -1,0 +1,95 @@
+{
+  "name": "antigravity-claude-code-proxy",
+  "version": "2.11.0",
+  "description": "Multi-provider AI gateway for Claude Code - Use Gemini, GPT-5, Grok with status bar integration",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "antigravity-claude-proxy": "bin/cli.js"
+  },
+  "files": [
+    "src",
+    "bin"
+  ],
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "accounts": "node src/accounts-cli.js",
+    "accounts:add": "node src/accounts-cli.js add",
+    "accounts:list": "node src/accounts-cli.js list",
+    "accounts:remove": "node src/accounts-cli.js remove",
+    "accounts:verify": "node src/accounts-cli.js verify",
+    "login:perplexity": "node scripts/login-perplexity.js",
+    "login:perplexity:session": "node scripts/login-perplexity-session.js",
+    "doctor": "node scripts/doctor.js",
+    "lint": "eslint src/ test/ tests/smoke/ scripts/ bin/ --max-warnings=0",
+    "lint:fix": "eslint src/ test/ tests/smoke/ scripts/ bin/ --fix",
+    "format": "prettier --write \"src/resilience/**/*.js\" \"src/http/**/*.js\" \"src/utils/redact.js\" \"test/**/*.{mjs,json}\" eslint.config.js tsconfig.json .c8rc.json",
+    "format:check": "prettier --check \"src/resilience/**/*.js\" \"src/http/**/*.js\" \"src/utils/redact.js\" \"test/**/*.{mjs,json}\" eslint.config.js tsconfig.json .c8rc.json",
+    "test": "node --test --test-concurrency=1 tests/smoke/*.test.mjs test/unit/*.test.mjs test/conformance/*.test.mjs test/integration/*.test.mjs",
+    "test:live": "node tests/run-all.cjs",
+    "test:signatures": "node tests/test-thinking-signatures.cjs",
+    "test:multiturn": "node tests/test-multiturn-thinking-tools.cjs",
+    "test:streaming": "node tests/test-multiturn-thinking-tools-streaming.cjs",
+    "test:interleaved": "node tests/test-interleaved-thinking.cjs",
+    "test:images": "node tests/test-images.cjs",
+    "test:caching": "node tests/test-caching-streaming.cjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test:unit": "node --test --test-concurrency=1 test/unit/*.test.mjs",
+    "test:conformance": "node --test --test-concurrency=1 test/conformance/*.test.mjs",
+    "test:coverage": "c8 npm test",
+    "test:integration": "node --test --test-concurrency=1 test/integration/*.test.mjs"
+  },
+  "keywords": [
+    "claude",
+    "anthropic",
+    "antigravity",
+    "proxy",
+    "vertex-ai"
+  ],
+  "author": "Badri Narayanan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muhib-karim/Antigravity-Claude-Code-Proxy.git"
+  },
+  "homepage": "https://github.com/muhib-karim/Antigravity-Claude-Code-Proxy#readme",
+  "bugs": {
+    "url": "https://github.com/muhib-karim/Antigravity-Claude-Code-Proxy/issues"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
+    "c8": "^12.0.0",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
+    "typescript": "~7.0.2"
+  },
+  "peerDependencies": {
+    "puppeteer": "^24.34.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "peerDependenciesMeta": {
+    "puppeteer": {
+      "optional": true
+    },
+    "puppeteer-extra": {
+      "optional": true
+    },
+    "puppeteer-extra-plugin-stealth": {
+      "optional": true
+    }
+  }
+}

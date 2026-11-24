@@ -1,0 +1,109 @@
+name: Publish Extension
+
+# Status bar extension releases (separate from proxy releases, which use v* tags; see release.yml).
+# Trigger with an ext-vX.Y.Z tag or manually. The extension source lives in its own repository.
+# Open VSX publishing is skipped (with a notice, not a failure) when OVSX_PAT is not configured,
+# when the extension repo's version differs from the requested one, or when that version is
+# already on Open VSX. The GitHub release it creates is never marked Latest.
+
+on:
+  push:
+    tags:
+      - 'ext-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Extension version to release (e.g. 4.3.1)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      HAS_OVSX_PAT: ${{ secrets.OVSX_PAT != '' }}
+      INPUT_VERSION: ${{ github.event.inputs.version }}
+
+    steps:
+      - name: Checkout main repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Clone extension repo
+        run: |
+          rm -rf claude-proxy-ext-src
+          git clone --depth 1 https://github.com/muhib-karim/Claude-Proxy-Extension.git claude-proxy-ext-src
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+
+      - name: Resolve versions
+        id: v
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION="${GITHUB_REF_NAME#ext-v}"
+          fi
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::'$VERSION' is not an X.Y.Z version"; exit 1
+          fi
+          EXT_VERSION=$(node -p "require('./claude-proxy-ext-src/package.json').version")
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "TAG=ext-v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "EXT_VERSION=$EXT_VERSION" >> "$GITHUB_OUTPUT"
+          if [ "$EXT_VERSION" = "$VERSION" ]; then
+            echo "MATCH=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Extension repo is at $EXT_VERSION, not $VERSION; nothing will be published"
+            echo "MATCH=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package extension
+        if: steps.v.outputs.MATCH == 'true'
+        working-directory: claude-proxy-ext-src
+        run: |
+          npm install
+          npx @vscode/vsce@4.1.1 package
+
+      - name: Check whether this extension version is already on Open VSX
+        if: steps.v.outputs.MATCH == 'true'
+        id: ovsx_check
+        env:
+          EXT_VERSION: ${{ steps.v.outputs.EXT_VERSION }}
+        run: |
+          if curl -sf "https://open-vsx.org/api/ai-dev-2024/claude-proxy-status/$EXT_VERSION" > /dev/null; then
+            echo "Extension v$EXT_VERSION is already published; skipping Open VSX upload"
+            echo "PUBLISHED=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "PUBLISHED=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to Open VSX
+        if: steps.v.outputs.MATCH == 'true' && steps.ovsx_check.outputs.PUBLISHED != 'true' && env.HAS_OVSX_PAT == 'true'
+        working-directory: claude-proxy-ext-src
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx ovsx@1.4.0 publish *.vsix -p "$OVSX_PAT"
+
+      - name: Note skipped Open VSX upload
+        if: steps.v.outputs.MATCH == 'true' && steps.ovsx_check.outputs.PUBLISHED != 'true' && env.HAS_OVSX_PAT != 'true'
+        run: echo "::notice::OVSX_PAT is not configured; the extension was packaged but not published to Open VSX"
+
+      - name: Create GitHub release for the extension (not Latest)
+        if: steps.v.outputs.MATCH == 'true' && github.event_name == 'push'
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
+        with:
+          tag_name: ${{ steps.v.outputs.TAG }}
+          name: Status bar extension v${{ steps.v.outputs.VERSION }}
+          body: Status bar extension v${{ steps.v.outputs.VERSION }}. See https://open-vsx.org/extension/ai-dev-2024/claude-proxy-status
+          files: claude-proxy-ext-src/*.vsix
+          make_latest: 'false'

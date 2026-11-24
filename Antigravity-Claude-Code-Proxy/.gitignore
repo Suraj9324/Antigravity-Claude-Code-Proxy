@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+log.txt
+
+# IDE
+.vscode/
+.idea/
+
+# Local config (may contain tokens)
+.claude/
+
+# Test artifacts
+tests/utils/*.png
+tests/utils/*.jpg
+tests/utils/*.jpeg
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Build output
+dist/
+build/
+
+# Sensitive data
+accounts.json
+perplexity-sessions.json
+model-override.json
+cookies/
+tokens/
+logs/
+*.token
+*.secret
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
